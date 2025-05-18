@@ -1,65 +1,78 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type useSelectedType from '~/hooks/use-selected-type';
-import callAll from '~/lib/call-all';
-import getMockResults from '~/lib/get-mock-results';
+import { useCallback, useRef, useState } from 'react';
+import type { SearchType } from '~/types';
+import type { SearchConfig } from '~/lib/get-search-config';
 import LastRecentlyUsedCache from '~/lib/last-recently-used-cache';
-import useDebouncedState from '~/hooks/use-debounced-state';
+import getMockSearchResults from '~/lib/get-mock-search-results';
+import useDebouncedCallback from '~/hooks/use-debounced-callback';
 
-type UseQueryProps = {
-  typeSelector: ReturnType<typeof useSelectedType>;
-};
+type UseQueryProps = { config: SearchConfig };
 
-export default function useQuery({
-  typeSelector: { selectedTypes },
-}: UseQueryProps) {
-  const [search, setSearch] = useDebouncedState<string>();
-  const [state, setState] = useState<{ isLoading: boolean; data: string[] }>({
+export default function useQuery({ config }: UseQueryProps) {
+  const [state, setState] = useState<{
+    isLoading: boolean;
+    search: string;
+    searchTypes: Set<SearchType>;
+    data: string[];
+  }>({
     isLoading: false,
+    search: config.initialSearch,
+    searchTypes: config.initialSearchTypes,
     data: [],
   });
 
   const cacheRef = useRef(new LastRecentlyUsedCache<typeof state.data>());
+  const cacheKeyRef = useRef<string | null>(null);
   const requestIdRef = useRef(0);
 
-  const handleToggleLoading = useCallback((input: string) => {
-    setState((prev) => ({ ...prev, isLoading: Boolean(input) }));
-  }, []);
+  const debounced = useDebouncedCallback(config.searchDelay);
 
   const onInputChange = useCallback(
-    (input: string) => {
-      callAll(handleToggleLoading, setSearch)(input);
+    ({
+      search,
+      searchTypes,
+    }: {
+      search: string;
+      searchTypes: Set<SearchType>;
+    }) => {
+      const isQueryable = Boolean(search.trim()) && Boolean(searchTypes.size);
+      if (!isQueryable) {
+        setState({ isLoading: false, search, searchTypes, data: [] });
+        cacheKeyRef.current = null;
+        return;
+      }
+
+      const cacheKey = `${search}:${[...searchTypes].sort()}`;
+      cacheKeyRef.current = cacheKey;
+
+      const cachedResult = cacheRef.current.get(cacheKey);
+      if (cachedResult) {
+        setState({
+          isLoading: false,
+          search,
+          searchTypes,
+          data: cachedResult.value,
+        });
+        return;
+      }
+
+      setState({ isLoading: true, search, searchTypes, data: [] });
+      const requestId = ++requestIdRef.current;
+
+      debounced(async function fetchResults() {
+        const data = await getMockSearchResults({ search, searchTypes });
+
+        cacheRef.current.set(cacheKey, data);
+
+        if (
+          cacheKey === cacheKeyRef.current &&
+          requestId === requestIdRef.current
+        ) {
+          setState((prev) => ({ ...prev, isLoading: false, data }));
+        }
+      });
     },
-    [handleToggleLoading, setSearch],
+    [debounced],
   );
 
-  useEffect(() => {
-    if (!search?.trim() || !selectedTypes.size) {
-      setState({ isLoading: false, data: [] });
-      return;
-    }
-
-    const cacheKey = `${search}:${[...selectedTypes].sort().join(',')}`;
-
-    const cachedResults = cacheRef.current.get(cacheKey);
-    if (cachedResults) {
-      setState({ isLoading: false, data: cachedResults.value });
-      return;
-    }
-
-    const currentRequestId = ++requestIdRef.current;
-
-    (async function fetchResults() {
-      setState((prev) => ({ ...prev, isLoading: true }));
-
-      const data = await getMockResults({ search, selectedTypes });
-
-      cacheRef.current.set(cacheKey, data);
-
-      if (currentRequestId === requestIdRef.current) {
-        setState({ isLoading: false, data });
-      }
-    })();
-  }, [search, selectedTypes]);
-
-  return { query: { ...state, search }, onInputChange } as const;
+  return [state, onInputChange] as const;
 }

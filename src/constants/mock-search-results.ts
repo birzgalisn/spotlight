@@ -1,7 +1,7 @@
 import type { SearchType } from '~/types';
 
 /* prettier-ignore */
-const MOCK_QUERY_RESULTS = {
+const MOCK_SEARCH_RESULTS = {
   Users: [
     'Emily', 'James', 'Olivia', 'Liam', 'Sophia', 'Noah', 'Emma', 'Mason', 'Isabella', 'Logan',
     'Mia', 'Lucas', 'Ava', 'Ethan', 'Charlotte', 'Aiden', 'Amelia', 'Jackson', 'Harper', 'Sebastian',
@@ -29,4 +29,4 @@ const MOCK_QUERY_RESULTS = {
   ]
 } as const satisfies Record<SearchType, string[]>;
 
-export default MOCK_QUERY_RESULTS;
+export default MOCK_SEARCH_RESULTS;

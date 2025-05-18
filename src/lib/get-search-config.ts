@@ -5,7 +5,8 @@ export type SearchConfig = {
   prefetchOnMount: boolean;
   initialInput: string;
   initialSearch: string;
-  initialSearchType: SearchType;
+  searchDelay: number;
+  initialSearchTypes: Set<SearchType>;
   enabledSearchTypes: SearchType[];
 };
 
@@ -14,7 +15,8 @@ export default function getSearchConfig() {
     prefetchOnMount: false,
     initialInput: '',
     initialSearch: '',
-    initialSearchType: [...DEFAULT_SEARCH_TYPES].shift() ?? 'Users',
+    initialSearchTypes: new Set([[...DEFAULT_SEARCH_TYPES].shift() ?? 'Users']),
     enabledSearchTypes: DEFAULT_SEARCH_TYPES,
+    searchDelay: 500,
   } as const satisfies SearchConfig;
 }

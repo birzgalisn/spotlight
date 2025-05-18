@@ -1,29 +1,26 @@
 import type { SearchType } from '~/types';
-import type { SearchSharedProps } from '~/ui/search';
+import type { SharedSearchProps } from '~/ui/search';
 
-function SearchFilters({ injected }: SearchSharedProps) {
-  const [selectedType] = injected.typeSelector.selectedTypes;
-
-  const handleSelectedType = (type: SearchType) => () => {
-    injected.queryInput.setInput(injected.queryInput.query.search ?? '');
-    injected.typeSelector.handleSelectedTypesChange(type);
+function SearchFilters({ config, search }: SharedSearchProps) {
+  const handleSelectedType = (searchType: SearchType) => () => {
+    search.onSearchTypeChange(searchType);
   };
-
-  if (!injected.overlayState.isOpen) {
-    return null;
-  }
 
   return (
     <div className="flex gap-2">
-      {injected.typeSelector.enabledSearchTypes.map((type) => (
-        <button
-          key={type}
-          onMouseDown={handleSelectedType(type)}
-          className={`flex cursor-pointer rounded border border-gray-300 px-2 py-0.5 ${type === selectedType ? 'bg-blue-500 text-white' : ''}`}
-        >
-          {type}
-        </button>
-      ))}
+      {config.enabledSearchTypes.map((type) => {
+        const isActive = search.query.searchTypes.has(type);
+
+        return (
+          <button
+            key={type}
+            onMouseDown={handleSelectedType(type)}
+            className={`flex cursor-pointer rounded border border-gray-300 px-2 py-0.5 ${isActive ? 'bg-blue-500 text-white' : ''}`}
+          >
+            {type}
+          </button>
+        );
+      })}
     </div>
   );
 }

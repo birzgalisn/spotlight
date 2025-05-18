@@ -1,38 +1,42 @@
-import type { SearchSharedProps } from '~/ui/search';
+import { useId } from 'react';
+import type { SharedSearchProps } from '~/ui/search';
 
 type SearchResultsProps = {
   renderItem: (item: string, index: number) => React.ReactNode;
 };
 
 function SearchResults({
-  injected,
+  search,
+  popper,
   renderItem,
-}: SearchSharedProps & SearchResultsProps) {
+}: SharedSearchProps & SearchResultsProps) {
+  const id = useId();
+
   const onItemClick = (title: string) => () => {
-    injected.queryInput.setInput(title);
-    injected.overlayState.toggleOpen(false);
+    search.onResultSelect(title);
+    popper.toggle(false);
   };
 
-  if (!injected.overlayState.isOpen) {
-    return null;
-  }
-
-  if (!injected.queryInput.input && !injected.queryInput.query.isLoading) {
+  if (!search.value && !search.query.isLoading) {
     return <span>Start typing to search</span>;
   }
 
-  if (injected.queryInput.query.isLoading) {
+  if (search.query.isLoading) {
     return <span>Loading results...</span>;
   }
 
-  if (!injected.queryInput.query.data.length) {
+  if (!search.query.data.length) {
     return <span>No results found</span>;
   }
 
   return (
-    <div className="flex max-h-48 flex-col overflow-auto">
-      {injected.queryInput.query.data.map((item, index) => (
-        <div key={index} onClick={onItemClick(item)} className="cursor-pointer">
+    <div className="flex max-h-52 flex-col overflow-auto">
+      {search.query.data.map((item, index) => (
+        <div
+          key={`${id}-${index}`}
+          onClick={onItemClick(item)}
+          className="cursor-pointer"
+        >
           {renderItem(item, index)}
         </div>
       ))}

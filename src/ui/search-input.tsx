@@ -1,24 +1,24 @@
-import type { SearchSharedProps } from '~/ui/search';
+import type { SharedSearchProps } from '~/ui/search';
 
-function SearchInput({ injected }: SearchSharedProps) {
+function SearchInput({ search, popper }: SharedSearchProps) {
   const handleFocus = () => {
-    injected.overlayState.toggleOpen(true);
+    popper.toggle(true);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    injected.queryInput.onChange(e.target.value);
+    search.onInputChange(e.target.value);
   };
 
   return (
-    <div className="relative">
+    <div className="relative bg-white">
       <input
-        value={injected.queryInput.input}
+        value={search.value}
         onFocus={handleFocus}
         onChange={handleChange}
         placeholder="Search..."
         className="w-full rounded border border-gray-300 p-2 pr-10"
       />
-      {injected.queryInput.query.isLoading && (
+      {search.query.isLoading && (
         <div className="absolute top-1/2 right-1 size-4 -translate-x-1/2 -translate-y-1/2 animate-spin rounded-full border-2 border-t-transparent" />
       )}
     </div>

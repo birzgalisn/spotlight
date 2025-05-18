@@ -5,7 +5,7 @@ export default class LastRecentlyUsedCache<T> {
 
   constructor({
     sizeLimit = 10,
-    ttl = 1000 * 60, // One minute
+    ttl = 1000 * 60,
   }: Partial<{ sizeLimit: number; ttl: number }> = {}) {
     this.sizeLimit = sizeLimit;
     this.ttl = ttl;

@@ -1,44 +1,49 @@
 import { Children, cloneElement, isValidElement, useRef } from 'react';
 import type { SearchConfig } from '~/lib/get-search-config';
-import useSearchConfig from '~/hooks/use-search-config';
-import useOverlay from '~/hooks/use-overlay';
-import useQueryInput from '~/hooks/use-query-input';
-import useSelectedType from '~/hooks/use-selected-type';
+import useConfig from '~/hooks/use-config';
+import usePopperState from '~/hooks/use-popper-state';
+import useSearch from '~/hooks/use-search';
 import SearchInput from '~/ui/search-input';
+import SearchPopper from '~/ui/search-popper';
 import SearchFilters from '~/ui/search-filters';
 import SearchResults from '~/ui/search-results';
 
-export type SearchSharedProps = {
-  injected: {
-    overlayState: ReturnType<typeof useOverlay>;
-    typeSelector: ReturnType<typeof useSelectedType>;
-    queryInput: ReturnType<typeof useQueryInput>;
-  };
+export type SharedSearchProps = {
+  ref: React.RefObject<HTMLDivElement | null>;
+  config: SearchConfig;
+  search: ReturnType<typeof useSearch>;
+  popper: ReturnType<typeof usePopperState>;
 };
 
-export type Search = {
+export type SearchProps = {
   config?: Partial<SearchConfig>;
+  onSelect?: (selected: string) => void;
 } & React.PropsWithChildren;
 
-function SearchContainer({ config: configPartial, children }: Search) {
+function SearchContainer({
+  config: configPartial,
+  onSelect,
+  children,
+}: SearchProps) {
   const ref = useRef<HTMLDivElement>(null);
 
-  const config = useSearchConfig({ configPartial });
+  const config = useConfig({ configPartial });
 
-  const overlayState = useOverlay({ ref });
+  const search = useSearch({ config, onSelect });
 
-  const typeSelector = useSelectedType({ config });
-
-  const queryInput = useQueryInput({ config, overlayState, typeSelector });
+  const popper = usePopperState({ ref, onOpen: search.onPopperOpen });
 
   const props = {
-    injected: { overlayState, typeSelector, queryInput },
-  } satisfies SearchSharedProps;
+    ref,
+    config,
+    search,
+    popper,
+  } as const satisfies SharedSearchProps;
 
   return (
     <div
       ref={ref}
-      className="flex w-96 flex-col gap-2 rounded-md border border-gray-300 p-3"
+      className="flex w-96 flex-col gap-2 rounded border border-gray-300 bg-white p-3"
     >
       {Children.map(children, (child) =>
         isValidElement(child)
@@ -51,6 +56,7 @@ function SearchContainer({ config: configPartial, children }: Search) {
 
 const Search = Object.assign(SearchContainer, {
   Input: SearchInput,
+  Popper: SearchPopper,
   Filters: SearchFilters,
   Results: SearchResults,
 });
