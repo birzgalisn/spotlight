@@ -1,12 +1,24 @@
 import type { SharedSearchProps } from '~/ui/search';
 
-function SearchInput({ search, popper }: SharedSearchProps) {
+type SearchInputProps = {
+  placeholder?: string;
+};
+
+function SearchInput({
+  search,
+  popper,
+  placeholder = 'Search...',
+}: SearchInputProps & SharedSearchProps) {
   const handleFocus = () => {
     popper.toggle(true);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    search.onInputChange(e.target.value);
+    search.setValue(e.target.value);
+    search.fetchResults({
+      search: e.target.value,
+      searchTypes: search.query.searchTypes,
+    });
   };
 
   return (
@@ -15,7 +27,7 @@ function SearchInput({ search, popper }: SharedSearchProps) {
         value={search.value}
         onFocus={handleFocus}
         onChange={handleChange}
-        placeholder="Search..."
+        placeholder={placeholder}
         className="w-full rounded border border-gray-300 p-2 pr-10"
       />
       {search.query.isLoading && (
@@ -25,4 +37,4 @@ function SearchInput({ search, popper }: SharedSearchProps) {
   );
 }
 
-export default SearchInput as React.FC;
+export default SearchInput as React.FC<SearchInputProps>;

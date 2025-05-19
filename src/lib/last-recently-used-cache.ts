@@ -31,9 +31,9 @@ export default class LastRecentlyUsedCache<T> {
 
   set(key: string, value: T) {
     if (this.cache.size >= this.sizeLimit) {
-      const firstKey = this.cache.keys().next().value;
-      if (firstKey) {
-        this.cache.delete(firstKey);
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey) {
+        this.cache.delete(oldestKey);
       }
     }
 

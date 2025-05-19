@@ -1,6 +1,6 @@
 import type { SearchType } from '~/types';
 
-type GetNewSeatchTypes = {
+type GetNewSeatchTypesProps = {
   searchType: SearchType;
   searchTypes: Set<SearchType>;
 };
@@ -8,7 +8,7 @@ type GetNewSeatchTypes = {
 export default function getNewSearchTypes({
   searchType,
   searchTypes,
-}: GetNewSeatchTypes) {
+}: GetNewSeatchTypesProps) {
   const newSearchTypes = new Set(searchTypes);
 
   newSearchTypes.clear();

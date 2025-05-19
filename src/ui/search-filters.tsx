@@ -1,9 +1,17 @@
 import type { SearchType } from '~/types';
 import type { SharedSearchProps } from '~/ui/search';
+import getNewSearchTypes from '~/lib/get-new-search-types';
 
 function SearchFilters({ config, search }: SharedSearchProps) {
   const handleSelectedType = (searchType: SearchType) => () => {
-    search.onSearchTypeChange(searchType);
+    search.setValue(search.query.search);
+    search.fetchResults({
+      search: search.query.search,
+      searchTypes: getNewSearchTypes({
+        searchType,
+        searchTypes: search.query.searchTypes,
+      }),
+    });
   };
 
   return (

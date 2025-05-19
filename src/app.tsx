@@ -9,33 +9,22 @@ export default function App() {
     <div className="flex h-svh w-full items-center justify-center gap-8 p-5">
       <div className="flex flex-col gap-4">
         <p>Default</p>
-        <Search onSelect={onSelect}>
+        <Search>
           <Search.Input />
           <Search.Popper>
             <Search.Filters />
-            <Search.Results
-              renderItem={(item) => (
-                <div className="border-b border-gray-300 py-2">{item}</div>
-              )}
-            />
+            <Search.Results onSelect={onSelect} />
           </Search.Popper>
         </Search>
       </div>
 
       <div className="flex flex-col gap-4">
         <p>With prefilled values</p>
-        <Search
-          config={{ initialInput: 'a', initialSearch: 'a' }}
-          onSelect={onSelect}
-        >
+        <Search initialInput="a" initialSearch="a">
           <Search.Input />
           <Search.Popper>
             <Search.Filters />
-            <Search.Results
-              renderItem={(item) => (
-                <div className="border-b border-gray-300 py-2">{item}</div>
-              )}
-            />
+            <Search.Results onSelect={onSelect} />
           </Search.Popper>
         </Search>
       </div>
@@ -43,22 +32,15 @@ export default function App() {
       <div className="flex flex-col gap-4">
         <p>With prefilled values & auto prefetch</p>
         <Search
-          config={{
-            prefetchOnMount: true,
-            initialInput: 'a',
-            initialSearch: 'a',
-            initialSearchTypes: new Set(['Posts']),
-          }}
-          onSelect={onSelect}
+          prefetchOnMount
+          initialInput="a"
+          initialSearch="a"
+          initialSearchTypes={new Set(['Posts'])}
         >
           <Search.Input />
           <Search.Popper>
             <Search.Filters />
-            <Search.Results
-              renderItem={(item) => (
-                <div className="border-b border-gray-300 py-2">{item}</div>
-              )}
-            />
+            <Search.Results onSelect={onSelect} />
           </Search.Popper>
         </Search>
       </div>

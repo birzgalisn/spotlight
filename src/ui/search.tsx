@@ -15,21 +15,14 @@ export type SharedSearchProps = {
   popper: ReturnType<typeof usePopperState>;
 };
 
-export type SearchProps = {
-  config?: Partial<SearchConfig>;
-  onSelect?: (selected: string) => void;
-} & React.PropsWithChildren;
+export type SearchProps = {} & Partial<SearchConfig> & React.PropsWithChildren;
 
-function SearchContainer({
-  config: configPartial,
-  onSelect,
-  children,
-}: SearchProps) {
+function SearchContainer({ children, ...configPartial }: SearchProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const config = useConfig({ configPartial });
 
-  const search = useSearch({ config, onSelect });
+  const search = useSearch({ config });
 
   const popper = usePopperState({ ref, onOpen: search.onPopperOpen });
 

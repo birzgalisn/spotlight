@@ -18,7 +18,6 @@ function SearchPopper({
   return (
     <Popper
       parentRef={sharedProps.ref}
-      isVisible={sharedProps.popper.isOpen}
       width={width}
       className="-mt-px flex flex-col gap-4 rounded border border-gray-300 bg-white p-3"
     >

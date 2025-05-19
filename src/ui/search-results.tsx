@@ -1,19 +1,25 @@
 import { useId } from 'react';
 import type { SharedSearchProps } from '~/ui/search';
+import callAll from '~/lib/call-all';
+import SearchResultsChildren, {
+  type SearchResultsChildrenProps,
+} from '~/ui/search-results-children';
 
 type SearchResultsProps = {
-  renderItem: (item: string, index: number) => React.ReactNode;
+  onSelect?: (item: string) => void;
+  children?: React.FC<SearchResultsChildrenProps>;
 };
 
 function SearchResults({
   search,
   popper,
-  renderItem,
+  onSelect,
+  children: Children = SearchResultsChildren,
 }: SharedSearchProps & SearchResultsProps) {
   const id = useId();
 
   const onItemClick = (title: string) => () => {
-    search.onResultSelect(title);
+    callAll(search.setValue, onSelect)(title);
     popper.toggle(false);
   };
 
@@ -30,15 +36,13 @@ function SearchResults({
   }
 
   return (
-    <div className="flex max-h-52 flex-col overflow-auto">
+    <div className="flex max-h-52 flex-col divide-y divide-gray-300 overflow-auto">
       {search.query.data.map((item, index) => (
-        <div
+        <Children
           key={`${id}-${index}`}
-          onClick={onItemClick(item)}
-          className="cursor-pointer"
-        >
-          {renderItem(item, index)}
-        </div>
+          item={item}
+          onItemClick={onItemClick}
+        />
       ))}
     </div>
   );
