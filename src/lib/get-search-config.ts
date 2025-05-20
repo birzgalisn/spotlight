@@ -17,6 +17,6 @@ export default function getSearchConfig() {
     initialSearch: '',
     initialSearchTypes: new Set([[...DEFAULT_SEARCH_TYPES].shift() ?? 'Users']),
     enabledSearchTypes: DEFAULT_SEARCH_TYPES,
-    searchDelay: 500,
+    searchDelay: (1 / 2) * 1000,
   } as const satisfies SearchConfig;
 }
