@@ -15,7 +15,7 @@ function SearchInput({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     search.setValue(e.target.value);
-    search.fetchResults({
+    void search.fetchResults({
       search: e.target.value,
       searchTypes: search.query.searchTypes,
     });

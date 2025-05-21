@@ -26,7 +26,7 @@ export default function useSearchQuery({
 
   const onInputChange = useCallback(
     (params: DebouncedSearchQueryParams) => {
-      debouncedSearchQuery.query(params, {
+      void debouncedSearchQuery.query(params, {
         onInvalidQuery() {
           setState({ ...params, isLoading: false, data: [] });
         },

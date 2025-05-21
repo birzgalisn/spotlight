@@ -5,7 +5,7 @@ import getNewSearchTypes from '~/lib/get-new-search-types';
 function SearchFilters({ config, search }: SharedSearchProps) {
   const handleSelectedType = (searchType: SearchType) => () => {
     search.setValue(search.query.search);
-    search.fetchResults({
+    void search.fetchResults({
       search: search.query.search,
       searchTypes: getNewSearchTypes({
         searchType,

@@ -9,7 +9,7 @@ export default function useSearch({ config }: UseSearchProps) {
 
   const [value, setValue] = useState(() => {
     if (config.prefetchOnMount && config.initialSearch) {
-      fetchResults({
+      void fetchResults({
         search: config.initialSearch,
         searchTypes: config.initialSearchTypes,
       });
@@ -18,7 +18,7 @@ export default function useSearch({ config }: UseSearchProps) {
   });
 
   const onPopperOpen = () => {
-    fetchResults({ search: query.search, searchTypes: query.searchTypes });
+    void fetchResults({ search: query.search, searchTypes: query.searchTypes });
   };
 
   return { value, setValue, query, fetchResults, onPopperOpen } as const;
