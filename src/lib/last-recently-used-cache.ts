@@ -1,9 +1,12 @@
 export default class LastRecentlyUsedCache<T> {
-  private cache = new Map<string, { value: T; timestamp: number }>();
-  private sizeLimit: number;
-  private ttl: number;
+  private readonly cache = new Map<
+    string,
+    { value: T; timeout: NodeJS.Timeout }
+  >();
+  private readonly sizeLimit: number;
+  private readonly ttl: number;
 
-  constructor({
+  public constructor({
     sizeLimit = 10,
     ttl = 60 * 1000,
   }: Partial<{ sizeLimit: number; ttl: number }> = {}) {
@@ -11,36 +14,51 @@ export default class LastRecentlyUsedCache<T> {
     this.ttl = ttl;
   }
 
-  get(key: string) {
-    const cached = this.cache.get(key);
+  public get(key: string) {
+    const entry = this.cache.get(key);
 
-    if (!cached) {
-      return;
-    }
-
-    if (Date.now() - cached.timestamp > this.ttl) {
-      this.cache.delete(key);
+    if (!entry) {
       return;
     }
 
     this.cache.delete(key);
-    this.cache.set(key, cached);
+    this.cache.set(key, entry);
 
-    return cached;
+    entry.timeout = this.scheduleCleanup(key, entry.timeout);
+
+    return entry.value;
   }
 
-  set(key: string, value: T) {
+  public set(key: string, value: T) {
     if (this.cache.size >= this.sizeLimit) {
-      const oldestKey = this.cache.keys().next().value;
-      if (oldestKey) {
-        this.cache.delete(oldestKey);
+      const oldestEntry = this.cache.entries().next().value;
+
+      if (oldestEntry) {
+        const [key, entry] = oldestEntry;
+
+        clearTimeout(entry.timeout);
+
+        this.cache.delete(key);
       }
     }
 
-    this.cache.set(key, { value, timestamp: Date.now() });
+    this.cache.set(key, { value, timeout: this.scheduleCleanup(key) });
   }
 
-  clear() {
+  public clear() {
+    for (const cacheEntry of this.cache.values()) {
+      clearTimeout(cacheEntry.timeout);
+    }
     this.cache.clear();
+  }
+
+  private scheduleCleanup(key: string, timeout?: NodeJS.Timeout) {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+
+    return setTimeout(() => {
+      this.cache.delete(key);
+    }, this.ttl);
   }
 }

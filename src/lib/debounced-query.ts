@@ -13,7 +13,7 @@ export default abstract class DebouncedQuery<Params, Result> {
   private cacheKey: string | null = null;
   private requestId = 0;
 
-  constructor({
+  public constructor({
     sizeLimit = 10,
     ttl = 60 * 1000,
     delay = 300,
@@ -51,7 +51,7 @@ export default abstract class DebouncedQuery<Params, Result> {
 
     const cached = this.cache.get(cacheKey);
     if (cached) {
-      callbacks.onCacheHit?.(cached.value);
+      callbacks.onCacheHit?.(cached);
       return;
     }
 
