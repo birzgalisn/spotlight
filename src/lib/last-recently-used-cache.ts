@@ -58,6 +58,7 @@ export default class LastRecentlyUsedCache<T> {
     }
 
     return setTimeout(() => {
+      console.log(`reclaim: ${key}`);
       this.cache.delete(key);
     }, this.ttl);
   }
