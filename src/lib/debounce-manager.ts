@@ -2,7 +2,7 @@ export default class DebounceManager {
   private readonly delay: number;
   private timeout: NodeJS.Timeout | null = null;
 
-  public constructor(delay: number = 300) {
+  constructor(delay: number = 300) {
     this.delay = delay;
   }
 

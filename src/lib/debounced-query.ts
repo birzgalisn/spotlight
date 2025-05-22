@@ -12,7 +12,7 @@ export default abstract class DebouncedQuery<Params, Result> {
   private readonly debouncer: DebounceManager;
   private cacheKey: string | null = null;
 
-  public constructor({
+  constructor({
     sizeLimit = 10,
     ttl = 60 * 1000,
     delay = 300,

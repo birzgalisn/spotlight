@@ -7,7 +7,7 @@ export default class LastRecentlyUsedCache<T> {
   private readonly sizeLimit: number;
   private readonly ttl: number;
 
-  public constructor({
+  constructor({
     sizeLimit = 10,
     ttl = 60 * 1000,
   }: Partial<{ sizeLimit: number; ttl: number }> = {}) {

@@ -26,7 +26,7 @@ export default class DebouncedSearchQuery extends DebouncedQuery<
     return `${params.search}:${[...params.searchTypes].sort()}`;
   }
 
-  protected async fetchResults(params: DebouncedSearchQueryParams) {
-    return await getMockSearchResults(params);
+  protected fetchResults(params: DebouncedSearchQueryParams) {
+    return getMockSearchResults(params);
   }
 }
