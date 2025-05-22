@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState } from 'react';
 import type { SearchConfig } from '~/lib/get-search-config';
 import getSearchConfig from '~/lib/get-search-config';
 
@@ -7,8 +7,7 @@ type UseConfig = {
 };
 
 export default function useConfig({ configPartial }: UseConfig) {
-  return useMemo(
-    () => ({ ...getSearchConfig(), ...configPartial }),
-    [configPartial],
-  );
+  const [config] = useState(() => ({ ...getSearchConfig(), ...configPartial }));
+
+  return config;
 }

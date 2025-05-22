@@ -11,12 +11,14 @@ export type SearchConfig = {
 };
 
 export default function getSearchConfig() {
+  const [initialSearchType] = DEFAULT_SEARCH_TYPES;
+
   return {
     prefetchOnMount: false,
     initialInput: '',
     initialSearch: '',
-    initialSearchTypes: new Set([[...DEFAULT_SEARCH_TYPES].shift() ?? 'Users']),
+    initialSearchTypes: new Set([initialSearchType]),
     enabledSearchTypes: DEFAULT_SEARCH_TYPES,
-    searchDelay: (1 / 2) * 1000,
+    searchDelay: 1000,
   } as const satisfies SearchConfig;
 }
