@@ -30,6 +30,9 @@ export default function useSearchQuery({
         onInvalidQuery() {
           setState({ ...params, isLoading: false, data: [] });
         },
+        onQueryPending() {
+          setState((prev) => ({ ...prev, ...params, isLoading: true }));
+        },
         onQueryStart() {
           setState({ ...params, isLoading: true, data: [] });
         },

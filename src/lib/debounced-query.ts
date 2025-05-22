@@ -11,7 +11,6 @@ export default abstract class DebouncedQuery<Params, Result> {
   private readonly cache: LastRecentlyUsedCache<Result>;
   private readonly debouncer: DebounceManager;
   private cacheKey: string | null = null;
-  private requestId = 0;
 
   public constructor({
     sizeLimit = 10,
@@ -33,6 +32,7 @@ export default abstract class DebouncedQuery<Params, Result> {
     callbacks: {
       onInvalidQuery?: () => void;
       onCacheHit?: (result: Result) => void;
+      onQueryPending?: () => void;
       onQueryStart?: () => void;
       onQueryComplete?: (result: Result) => void;
       onQueryError?: (error: unknown) => void;
@@ -47,15 +47,22 @@ export default abstract class DebouncedQuery<Params, Result> {
     }
 
     const cacheKey = this.getCacheKey(params);
+
     this.cacheKey = cacheKey;
 
-    const cached = this.cache.get(cacheKey);
-    if (cached) {
-      callbacks.onCacheHit?.(cached);
+    const entry = this.cache.get(cacheKey);
+
+    if (entry?.status === 'ready') {
+      callbacks.onCacheHit?.(entry.value);
       return;
     }
 
-    const requestId = ++this.requestId;
+    if (entry?.status === 'pending') {
+      callbacks.onQueryPending?.();
+      return;
+    }
+
+    this.cache.markPending(cacheKey);
     callbacks.onQueryStart?.();
 
     this.debouncer.debounce(async () => {
@@ -64,11 +71,13 @@ export default abstract class DebouncedQuery<Params, Result> {
 
         this.cache.set(cacheKey, result);
 
-        if (cacheKey === this.cacheKey && requestId === this.requestId) {
+        if (cacheKey === this.cacheKey) {
           callbacks.onQueryComplete?.(result);
         }
       } catch (error) {
-        if (cacheKey === this.cacheKey && requestId === this.requestId) {
+        this.cache.clearKey(cacheKey);
+
+        if (cacheKey === this.cacheKey) {
           callbacks.onQueryError?.(error);
         }
       }

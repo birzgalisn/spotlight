@@ -1,8 +1,9 @@
+type CacheEntry<T> =
+  | { status: 'ready'; value: T; timeout: NodeJS.Timeout }
+  | { status: 'pending' };
+
 export default class LastRecentlyUsedCache<T> {
-  private readonly cache = new Map<
-    string,
-    { value: T; timeout: NodeJS.Timeout }
-  >();
+  private readonly cache = new Map<string, CacheEntry<T>>();
   private readonly sizeLimit: number;
   private readonly ttl: number;
 
@@ -17,8 +18,8 @@ export default class LastRecentlyUsedCache<T> {
   public get(key: string) {
     const entry = this.cache.get(key);
 
-    if (!entry) {
-      return;
+    if (!entry || entry.status === 'pending') {
+      return entry;
     }
 
     this.cache.delete(key);
@@ -26,28 +27,54 @@ export default class LastRecentlyUsedCache<T> {
 
     entry.timeout = this.scheduleCleanup(key, entry.timeout);
 
-    return entry.value;
+    return entry;
   }
 
   public set(key: string, value: T) {
-    if (this.cache.size >= this.sizeLimit) {
+    if (!this.cache.has(key) && this.cache.size >= this.sizeLimit) {
       const oldestEntry = this.cache.entries().next().value;
 
       if (oldestEntry) {
         const [key, entry] = oldestEntry;
 
-        clearTimeout(entry.timeout);
+        if (entry.status === 'ready') {
+          clearTimeout(entry.timeout);
+        }
 
         this.cache.delete(key);
       }
     }
 
-    this.cache.set(key, { value, timeout: this.scheduleCleanup(key) });
+    this.cache.set(key, {
+      status: 'ready',
+      value,
+      timeout: this.scheduleCleanup(key),
+    });
+  }
+
+  public markPending(key: string) {
+    this.cache.set(key, { status: 'pending' });
+  }
+
+  public isPending(key: string) {
+    return this.cache.get(key)?.status === 'pending';
+  }
+
+  public clearKey(key: string) {
+    const entry = this.cache.get(key);
+
+    if (entry?.status === 'ready') {
+      clearTimeout(entry.timeout);
+    }
+
+    this.cache.delete(key);
   }
 
   public clear() {
     for (const cacheEntry of this.cache.values()) {
-      clearTimeout(cacheEntry.timeout);
+      if (cacheEntry.status === 'ready') {
+        clearTimeout(cacheEntry.timeout);
+      }
     }
     this.cache.clear();
   }
@@ -58,7 +85,7 @@ export default class LastRecentlyUsedCache<T> {
     }
 
     return setTimeout(() => {
-      console.log(`reclaim: ${key}`);
+      console.log(`reclaim: '${key}'`);
       this.cache.delete(key);
     }, this.ttl);
   }
