@@ -15,6 +15,10 @@ export default async function getMockSearchResults({
   const delay = Math.floor(Math.random() * (1500 - 500 + 1)) + 500;
   await new Promise((resolve) => setTimeout(resolve, delay));
 
+  if (Math.random() < 1 / 3) {
+    throw new Error();
+  }
+
   const [selected] = [...searchTypes];
   const data = MOCK_SEARCH_RESULTS[selected].filter((item) =>
     item.toLowerCase().includes(search.toLowerCase()),

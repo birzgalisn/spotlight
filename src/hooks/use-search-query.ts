@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import type { SearchConfig } from '~/lib/get-search-config';
 import type { DebouncedSearchQueryParams } from '~/lib/debounced-search-query';
 import useDebouncedSearchQuery from '~/hooks/use-debounced-search-query';
+import useDebouncedSearchQueryReducer from '~/hooks/use-debounced-search-query-reducer';
 
 type SearchQueryProps = {
   config: SearchConfig;
@@ -13,39 +14,35 @@ export default function useSearchQuery({
   result: typeof state,
   onInputChange: typeof onInputChange,
 ] {
-  const [state, setState] = useState<
-    DebouncedSearchQueryParams & { isLoading: boolean; data: string[] }
-  >({
-    search: config.initialSearch,
-    searchTypes: config.initialSearchTypes,
-    isLoading: false,
-    data: [],
-  });
+  const [state, update] = useDebouncedSearchQueryReducer({ config });
 
-  const debouncedSearchQuery = useDebouncedSearchQuery(config);
+  const debouncedSearchQuery = useDebouncedSearchQuery({ config });
 
   const onInputChange = useCallback(
     (params: DebouncedSearchQueryParams) => {
       void debouncedSearchQuery.query(params, {
         onInvalidQuery() {
-          setState({ ...params, isLoading: false, data: [] });
+          update(params);
         },
         onQueryPending() {
-          setState((prev) => ({ ...prev, ...params, isLoading: true }));
+          update({ ...params, isLoading: true });
         },
         onQueryStart() {
-          setState({ ...params, isLoading: true, data: [] });
+          update({ ...params, isLoading: true });
         },
         onCacheHit(data) {
-          setState({ ...params, isLoading: false, data });
+          update({ ...params, data });
         },
         onQueryComplete(data) {
-          setState((prev) => ({ ...prev, isLoading: false, data }));
+          update({ ...params, data });
         },
-        onQueryError: console.error,
+        onQueryError(error) {
+          update({ ...params, isError: true });
+          console.error(error);
+        },
       });
     },
-    [debouncedSearchQuery],
+    [debouncedSearchQuery, update],
   );
 
   return [state, onInputChange] as const;

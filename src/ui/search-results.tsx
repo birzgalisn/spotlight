@@ -23,6 +23,10 @@ function SearchResults({
     popper.toggle(false);
   };
 
+  if (search.query.isError) {
+    return <span>Something went wrong....</span>;
+  }
+
   if (!search.value && !search.query.isLoading) {
     return <span>Start typing to search</span>;
   }
