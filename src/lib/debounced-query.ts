@@ -8,9 +8,10 @@ export type DebouncedQueryParams = {
 };
 
 export default abstract class DebouncedQuery<Params, Result> {
+  private readonly inflight = new Map<string, Promise<Result>>();
   private readonly cache: LastRecentlyUsedCache<Result>;
   private readonly debouncer: DebounceManager;
-  private cacheKey: string | null = null;
+  private currentKey: string | null = null;
 
   constructor({
     sizeLimit = 10,
@@ -41,52 +42,59 @@ export default abstract class DebouncedQuery<Params, Result> {
     this.debouncer.clear();
 
     if (!this.isQueryable(params)) {
-      this.cacheKey = null;
+      this.currentKey = null;
       callbacks.onInvalidQuery?.();
       return;
     }
 
-    const cacheKey = this.getCacheKey(params);
+    const key = this.getCacheKey(params);
+    this.currentKey = key;
 
-    this.cacheKey = cacheKey;
-
-    const entry = this.cache.get(cacheKey);
-
-    if (entry?.status === 'ready') {
-      callbacks.onCacheHit?.(entry.value);
+    const cached = this.cache.get(key);
+    if (cached) {
+      callbacks.onCacheHit?.(cached);
       return;
     }
 
-    if (entry?.status === 'pending') {
+    const ongoing = this.inflight.get(key);
+    if (ongoing) {
       callbacks.onQueryPending?.();
       return;
     }
 
-    this.cache.markPending(cacheKey);
     callbacks.onQueryStart?.();
 
     this.debouncer.debounce(async () => {
+      if (key !== this.currentKey) {
+        return;
+      }
+
+      const promise = this.fetchResults(params);
+      this.inflight.set(key, promise);
+
       try {
-        const result = await this.fetchResults(params);
+        const result = await promise;
+        this.cache.set(key, result);
 
-        this.cache.set(cacheKey, result);
-
-        if (cacheKey === this.cacheKey) {
+        if (key === this.currentKey) {
           callbacks.onQueryComplete?.(result);
         }
       } catch (error) {
-        this.cache.clearKey(cacheKey);
+        this.cache.delete(key);
 
-        if (cacheKey === this.cacheKey) {
+        if (key === this.currentKey) {
           callbacks.onQueryError?.(error);
         }
+      } finally {
+        this.inflight.delete(key);
       }
     });
   }
 
   public cleanup() {
+    this.inflight.clear();
     this.debouncer.clear();
     this.cache.clear();
-    this.cacheKey = null;
+    this.currentKey = null;
   }
 }

@@ -1,6 +1,8 @@
-type CacheEntry<T> =
-  | { status: 'ready'; value: T; timeout: NodeJS.Timeout }
-  | { status: 'pending' };
+type CacheEntry<T> = {
+  value: T;
+  timeout: NodeJS.Timeout;
+  expiresAt: number;
+};
 
 export default class LastRecentlyUsedCache<T> {
   private readonly cache = new Map<string, CacheEntry<T>>();
@@ -18,75 +20,59 @@ export default class LastRecentlyUsedCache<T> {
   public get(key: string) {
     const entry = this.cache.get(key);
 
-    if (!entry || entry.status === 'pending') {
-      return entry;
+    if (!entry) {
+      return;
     }
 
+    clearTimeout(entry.timeout);
     this.cache.delete(key);
-    this.cache.set(key, entry);
 
-    entry.timeout = this.scheduleCleanup(key, entry.timeout);
+    if (Date.now() >= entry.expiresAt) {
+      return;
+    }
 
-    return entry;
+    this.cache.set(key, {
+      value: entry.value,
+      expiresAt: entry.expiresAt,
+      timeout: setTimeout(() => this.cache.delete(key), this.ttl),
+    });
+
+    return entry.value;
   }
 
   public set(key: string, value: T) {
-    if (!this.cache.has(key) && this.cache.size >= this.sizeLimit) {
-      const oldestEntry = this.cache.entries().next().value;
+    if (this.cache.size >= this.sizeLimit) {
+      const oldest = this.cache.entries().next().value;
 
-      if (oldestEntry) {
-        const [key, entry] = oldestEntry;
+      if (oldest) {
+        const [key, entry] = oldest;
 
-        if (entry.status === 'ready') {
-          clearTimeout(entry.timeout);
-        }
-
+        clearTimeout(entry.timeout);
         this.cache.delete(key);
       }
     }
 
     this.cache.set(key, {
-      status: 'ready',
       value,
-      timeout: this.scheduleCleanup(key),
+      expiresAt: Date.now() + this.ttl,
+      timeout: setTimeout(() => this.cache.delete(key), this.ttl),
     });
   }
 
-  public markPending(key: string) {
-    this.cache.set(key, { status: 'pending' });
-  }
-
-  public isPending(key: string) {
-    return this.cache.get(key)?.status === 'pending';
-  }
-
-  public clearKey(key: string) {
+  public delete(key: string) {
     const entry = this.cache.get(key);
 
-    if (entry?.status === 'ready') {
+    if (entry) {
       clearTimeout(entry.timeout);
+      this.cache.delete(key);
     }
-
-    this.cache.delete(key);
   }
 
   public clear() {
-    for (const cacheEntry of this.cache.values()) {
-      if (cacheEntry.status === 'ready') {
-        clearTimeout(cacheEntry.timeout);
-      }
+    for (const entry of this.cache.values()) {
+      clearTimeout(entry.timeout);
     }
+
     this.cache.clear();
-  }
-
-  private scheduleCleanup(key: string, timeout?: NodeJS.Timeout) {
-    if (timeout) {
-      clearTimeout(timeout);
-    }
-
-    return setTimeout(() => {
-      console.log(`reclaim: '${key}'`);
-      this.cache.delete(key);
-    }, this.ttl);
   }
 }
