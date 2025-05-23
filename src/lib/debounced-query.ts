@@ -39,8 +39,6 @@ export default abstract class DebouncedQuery<Params, Result> {
       onQueryError?: (error: unknown) => void;
     } = {},
   ) {
-    this.debouncer.clear();
-
     if (!this.isQueryable(params)) {
       this.currentKey = null;
       callbacks.onInvalidQuery?.();
