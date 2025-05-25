@@ -1,4 +1,4 @@
-import { useRef, useState, useLayoutEffect } from 'react';
+import { useState, useLayoutEffect } from 'react';
 
 export type Placement = 'top' | 'bottom' | 'left' | 'right';
 
@@ -17,8 +17,6 @@ export default function usePopperPosition<T extends HTMLElement>({
     position: 'fixed',
     visibility: 'hidden',
   }));
-
-  const popperRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     const controller = new AbortController();
@@ -59,7 +57,6 @@ export default function usePopperPosition<T extends HTMLElement>({
   }, [width, placement, parentRef]);
 
   return {
-    ref: popperRef,
     style,
   } as const satisfies React.HTMLProps<HTMLDivElement>;
 }
