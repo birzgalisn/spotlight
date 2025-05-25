@@ -1,8 +1,10 @@
-import React, { useRef, useState, useLayoutEffect } from 'react';
+import { useRef, useState, useLayoutEffect } from 'react';
+
+export type Placement = 'top' | 'bottom' | 'left' | 'right';
 
 export type UsePopperPositionProps<T> = {
   parentRef: React.RefObject<T | null>;
-  placement?: 'top' | 'bottom' | 'left' | 'right';
+  placement?: Placement;
   width?: React.CSSProperties['width'];
 };
 
@@ -11,10 +13,11 @@ export default function usePopperPosition<T extends HTMLElement>({
   placement = 'bottom',
   width,
 }: UsePopperPositionProps<T>) {
-  const [style, setStyle] = useState<React.CSSProperties>({
+  const [style, setStyle] = useState<React.CSSProperties>(() => ({
     position: 'fixed',
     visibility: 'hidden',
-  });
+  }));
+
   const popperRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
@@ -22,41 +25,20 @@ export default function usePopperPosition<T extends HTMLElement>({
 
     const updatePosition = () => {
       const parent = parentRef.current;
-      const popper = popperRef.current;
 
-      if (!parent || !popper) {
+      if (!parent) {
         return;
       }
 
       const parentRect = parent.getBoundingClientRect();
-      const popperRect = popper.getBoundingClientRect();
+      const positionStyles = getPositionStyles(parentRect)[placement]();
 
-      const styles: React.CSSProperties = {
-        width: width ?? parentRect.width,
+      setStyle({
         position: 'fixed',
         visibility: 'visible',
-      };
-
-      switch (placement) {
-        case 'top':
-          styles.top = parentRect.top - popperRect.height + window.scrollY;
-          styles.left = parentRect.left + window.scrollX;
-          break;
-        case 'bottom':
-          styles.top = parentRect.bottom + window.scrollY;
-          styles.left = parentRect.left + window.scrollX;
-          break;
-        case 'left':
-          styles.top = parentRect.top + window.scrollY;
-          styles.left = parentRect.left - popperRect.width + window.scrollX;
-          break;
-        case 'right':
-          styles.top = parentRect.top + window.scrollY;
-          styles.left = parentRect.right + window.scrollX;
-          break;
-      }
-
-      setStyle(styles);
+        width: width ?? parentRect.width,
+        ...positionStyles,
+      });
     };
 
     if (parentRef.current) {
@@ -76,10 +58,31 @@ export default function usePopperPosition<T extends HTMLElement>({
     };
   }, [width, placement, parentRef]);
 
-  const attributes = {
+  return {
     ref: popperRef,
     style,
-  } as const satisfies React.HTMLProps<typeof popperRef.current>;
+  } as const satisfies React.HTMLProps<HTMLDivElement>;
+}
 
-  return attributes;
+function getPositionStyles(
+  parentRect: DOMRect,
+): Record<Placement, () => React.CSSProperties> {
+  return {
+    top: () => ({
+      bottom: window.innerHeight - parentRect.top + window.scrollY,
+      left: parentRect.left + window.scrollX,
+    }),
+    bottom: () => ({
+      top: parentRect.bottom + window.scrollY,
+      left: parentRect.left + window.scrollX,
+    }),
+    left: () => ({
+      top: parentRect.top + window.scrollY,
+      right: window.innerWidth - parentRect.left + window.scrollX,
+    }),
+    right: () => ({
+      top: parentRect.top + window.scrollY,
+      left: parentRect.right + window.scrollX,
+    }),
+  };
 }

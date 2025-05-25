@@ -11,9 +11,9 @@ export default function App() {
         <p>Default</p>
         <Search>
           <Search.Input />
-          <Search.Popper>
-            <Search.Filters />
+          <Search.Popper placement="top">
             <Search.Results onSelect={onSelect} />
+            <Search.Filters />
           </Search.Popper>
         </Search>
       </div>
